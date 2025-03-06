@@ -54,9 +54,9 @@ Revise PR
                         {% else %}
                         <option value="{{ pr_log['currency'] }}" selected>{{ pr_log['currency'] }}</option>
                         {% endif %}
-                        <option value="USD">USD</option>
-                        <option value="IQD">IQD</option>
-                        <option value="EUR">EUR</option>
+                        {% for currency in ["USD", "IQD", "EUR"] %}
+                        <option value="USD">{{ currency }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-2">
