@@ -1,32 +1,32 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    {% if creation %}
-        Create PR
-    {% else %}
-        Revise PR
-    {% endif %}
+{% if creation %}
+Create PR
+{% else %}
+Revise PR
+{% endif %}
 {% endblock %}
 
 {% block main %}
 
 {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <div class="container">
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        </div>
-    {% endif %}
+{% if messages %}
+<div class="container">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
 {% endwith %}
 
 <!-- Welcoming Header -->
 <div class="container mb-3">
     <h2 class="text-center">
         {% if creation %}
-            Create Purchase Request
+        Create Purchase Request
         {% else %}
-            Revise Purchase Request
+        Revise Purchase Request
         {% endif %}
     </h2>
     <hr>
@@ -38,19 +38,22 @@
         <div class="mb-3">
             <div class="row">
                 <div class="col-md-2">
-                    <input type="text" readonly class="form-control" placeholder="PR no." name="pr-no" value="{% if creation %}{{ new_pr_no }}{% else %}{{ pr_log['pr_no'] }}{% endif %}" required readonly>
+                    <input type="text" readonly class="form-control" placeholder="PR no." name="pr-no"
+                        value="{% if creation %}{{ new_pr_no }}{% else %}{{ pr_log['pr_no'] }}{% endif %}" required
+                        readonly>
                 </div>
                 <div class="col-md-3">
-                    <input type="text" class="form-control" placeholder="PR Title" name="title" value="{% if not creation %}{{ pr_log['title'] }}{% endif %}" required>
+                    <input type="text" class="form-control" placeholder="PR Title" name="title"
+                        value="{% if not creation %}{{ pr_log['title'] }}{% endif %}" required>
                 </div>
                 <div class="col-md-2">
                     <!-- Currency Dropdown -->
                     <select class="form-select" name="currency" required>
-                    {% if creation %}
+                        {% if creation %}
                         <option value="" disabled selected>Select Currency</option>
-                    {% else %}
+                        {% else %}
                         <option value="{{ pr_log['currency'] }}" selected>{{ pr_log['currency'] }}</option>
-                    {% endif %}
+                        {% endif %}
                         <option value="USD">USD</option>
                         <option value="IQD">IQD</option>
                         <option value="EUR">EUR</option>
@@ -59,18 +62,20 @@
                 <div class="col-md-2">
                     <!-- Budget Line Dropdown -->
                     <select class="form-select" name="budget-line" required>
-                    {% if creation %}
+                        {% if creation %}
                         <option value="" disabled selected>Select Budget Line</option>
-                    {% else %}
+                        {% else %}
                         <option value="{{ pr_log['budget_line'] }}" selected>{{ pr_log['budget_line'] }}</option>
-                    {% endif %}
+                        {% endif %}
                         <option value="1.1">1.1</option>
                         <option value="1.2">1.2</option>
                         <option value="1.3">1.3</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <input type="date" name="date" id="date" class="form-control" value="{% if creation %}{{ formattedDate }}{% else %}{{ pr_log['creation_date'] }}{% endif %}" required>
+                    <input type="date" name="date" id="date" class="form-control"
+                        value="{% if creation %}{{ formattedDate }}{% else %}{{ pr_log['creation_date'] }}{% endif %}"
+                        required>
                 </div>
             </div>
         </div>
@@ -90,31 +95,45 @@
                 </thead>
                 <tbody id="itemRows">
                     {% if creation %}
-                        <tr>
-                            <td class="index">1</td>
-                            <td><input type="text" class="form-control description" placeholder="description" name="description[]" required></td>
-                            <td><input type="number" class="form-control cost" placeholder="cost" name="cost[]" required></td>
-                            <td><input type="number" class="form-control quantity" placeholder="quantity" name="quantity[]" required></td>
-                            <td><input type="number" class="form-control total" placeholder="total" name="total[]" readonly required></td>
-                            <td><input type="hidden" class="form-control index-value" name="index[]" value="1"><button type="button" class="btn btn-danger btn-sm deleteRowBtn">Delete</button></td>
-                        </tr>
+                    <tr>
+                        <td class="index">1</td>
+                        <td><input type="text" class="form-control description" placeholder="description"
+                                name="description[]" required></td>
+                        <td><input type="number" class="form-control cost" placeholder="cost" name="cost[]" min="0"
+                                required>
+                        </td>
+                        <td><input type="number" class="form-control quantity" placeholder="quantity" name="quantity[]"
+                                min="0" required></td>
+                        <td><input type="number" class="form-control total" placeholder="total" name="total[]" readonly
+                                required></td>
+                        <td><input type="hidden" class="form-control index-value" name="index[]" value="1"><button
+                                type="button" class="btn btn-danger btn-sm deleteRowBtn">Delete</button></td>
+                    </tr>
                     {% else %}
-                        {% for pr_entry in pr_entries %}
-                            <tr>
-                                <td class="index">{{ loop.index }}</td>
-                                <td><input type="text" class="form-control description" placeholder="description" name="description[]" value="{{ pr_entry['description'] }}" required></td>
-                                <td><input type="number" class="form-control cost" placeholder="cost" name="cost[]" value="{{ pr_entry['cost'] }}" required></td>
-                                <td><input type="number" class="form-control quantity" placeholder="quantity" name="quantity[]" value="{{ pr_entry['quantity'] }}" required></td>
-                                <td><input type="number" class="form-control total" placeholder="total" name="total[]" value="{{ pr_entry['total_cost'] }}" readonly required></td>
-                                <td><input type="hidden" class="form-control index-value" name="index[]" value="{{ loop.index }}"><button type="button" class="btn btn-danger btn-sm deleteRowBtn">Delete</button></td>
-                            </tr>
-                        {% endfor %}
+                    {% for pr_entry in pr_entries %}
+                    <tr>
+                        <td class="index">{{ loop.index }}</td>
+                        <td><input type="text" class="form-control description" placeholder="description"
+                                name="description[]" value="{{ pr_entry['description'] }}" required></td>
+                        <td><input type="number" class="form-control cost" placeholder="cost" name="cost[]"
+                                value="{{ pr_entry['cost'] }}" required></td>
+                        <td><input type="number" class="form-control quantity" placeholder="quantity" name="quantity[]"
+                                value="{{ pr_entry['quantity'] }}" required></td>
+                        <td><input type="number" class="form-control total" placeholder="total" name="total[]"
+                                value="{{ pr_entry['total_cost'] }}" readonly required></td>
+                        <td><input type="hidden" class="form-control index-value" name="index[]"
+                                value="{{ loop.index }}"><button type="button"
+                                class="btn btn-danger btn-sm deleteRowBtn">Delete</button></td>
+                    </tr>
+                    {% endfor %}
                     {% endif %}
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="4" style="text-align: right; padding-right: 10px;"><strong>Total PR Cost:</strong></td>
-                        <td><input type="number" class="form-control" id="totalCost" placeholder="Total Cost" readonly name="total-cost"></td>
+                        <td colspan="4" style="text-align: right; padding-right: 10px;"><strong>Total PR Cost:</strong>
+                        </td>
+                        <td><input type="number" class="form-control" id="totalCost" placeholder="Total Cost" readonly
+                                name="total-cost"></td>
                     </tr>
                 </tfoot>
             </table>
@@ -126,7 +145,8 @@
 
         <!-- Submission Button -->
         <div class="text-center">
-            <button type="submit" class="btn btn-success">{% if creation %}Submit{% else %}Update{% endif %} Request</button>
+            <button type="submit" class="btn btn-success">{% if creation %}Submit{% else %}Update{% endif %}
+                Request</button>
         </div>
     </form>
     <br>
