@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block title %}PR Logger{% endblock %}
+
+{% block main %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="container">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+    <!--Welcoming Header-->
+    <div>
+        <p>Welcome to PR Logger</p>
+        <hr>
+
+    <!--Make new PR button-->
+    <form action="/create_pr">
+        <div>
+            <button class="btn btn-primary">Create New PR</button>
+        </div>
+    </form>
+
+    </div>
+
+    <!--Spacer-->
+    <div style="height: 40px;"></div>
+
+    <h4>PR LOGS</h4>
+
+    <!--Spacer-->
+    <div style="height: 23px;"></div>
+
+    <!-- Table -->
+    <div class="table-responsive" style="overflow-x: auto;">
+        <table class="table" style="table-layout: fixed; width: 100%; word-wrap: break-word;">
+            <thead>
+                <tr>
+                    {% for header in ["PR no.", "Title", "Currency", "Total_Cost", "Budget_Line", "Creation_Date", "Action"] %}
+                        <th>{{ header }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% if pr_logs %}
+                    {% for pr_log in pr_logs %}
+                    <tr>
+                        <td>
+                            <form action="/view_pr">
+                                <input type="hidden" name="pr_no" value="{{ pr_log['pr_no'] }}">
+                                <button type="submit" style="color: {{ 'red' if pr_log.deleted == 1 else 'white' }}" class="btn btn-secondary">
+                                    {{ pr_log['pr_no'] }}
+                                </button>
+                            </form>
+                        </td>
+
+                        {% for key in ['title', 'currency', 'total_cost', 'budget_line', 'creation_date'] %}
+                            <td style="color: {{ 'red' if pr_log.deleted == 1 else 'inherit' }}">
+                                {% if pr_log.deleted == 1 %}
+                                    <del>{{ pr_log[key] }}</del>
+                                {% else %}
+                                    {{ pr_log[key] }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        <!-- Status Change Button Form -->
+                        <td>
+                            <form action="/toggle_pr_status" method="post">
+                                <input type="hidden" name="pr-no" value="{{ pr_log['pr_no'] }}">
+                                <input type="hidden" name="status" value="{{ 'restore' if pr_log.deleted == 1 else 'delete' }}">
+                                <button type="submit" class="{{ 'btn btn-warning btn-sm' if pr_log.deleted == 1 else 'btn btn-danger btn-sm' }}">{{ 'Restore' if pr_log.deleted == 1 else 'Delete' }}</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+
+        </table>
+    </div>
+    {% if not pr_logs %}
+        <!--Spacer-->
+        <div style="height: 15px;"></div>
+        <tr>No PRs currently exist. please create a new one.</tr>
+    {% endif %}
+
+{% endblock %}

@@ -1,0 +1,225 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {% if creation %}
+        Create PR
+    {% else %}
+        Revise PR
+    {% endif %}
+{% endblock %}
+
+{% block main %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="container">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<!-- Welcoming Header -->
+<div class="container mb-3">
+    <h2 class="text-center">
+        {% if creation %}
+            Create Purchase Request
+        {% else %}
+            Revise Purchase Request
+        {% endif %}
+    </h2>
+    <hr>
+
+    <!-- Enter data for PR -->
+    <form action="{% if creation %}/create_pr{% else %}/update_pr{% endif %}" method="post" autocomplete="off">
+
+        <!-- PR log table -->
+        <div class="mb-3">
+            <div class="row">
+                <div class="col-md-2">
+                    <input type="text" readonly class="form-control" placeholder="PR no." name="pr-no" value="{% if creation %}{{ new_pr_no }}{% else %}{{ pr_log['pr_no'] }}{% endif %}" required readonly>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="PR Title" name="title" value="{% if not creation %}{{ pr_log['title'] }}{% endif %}" required>
+                </div>
+                <div class="col-md-2">
+                    <!-- Currency Dropdown -->
+                    <select class="form-select" name="currency" required>
+                    {% if creation %}
+                        <option value="" disabled selected>Select Currency</option>
+                    {% else %}
+                        <option value="{{ pr_log['currency'] }}" selected>{{ pr_log['currency'] }}</option>
+                    {% endif %}
+                        <option value="USD">USD</option>
+                        <option value="IQD">IQD</option>
+                        <option value="EUR">EUR</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <!-- Budget Line Dropdown -->
+                    <select class="form-select" name="budget-line" required>
+                    {% if creation %}
+                        <option value="" disabled selected>Select Budget Line</option>
+                    {% else %}
+                        <option value="{{ pr_log['budget_line'] }}" selected>{{ pr_log['budget_line'] }}</option>
+                    {% endif %}
+                        <option value="1.1">1.1</option>
+                        <option value="1.2">1.2</option>
+                        <option value="1.3">1.3</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="date" id="date" class="form-control" value="{% if creation %}{{ formattedDate }}{% else %}{{ pr_log['creation_date'] }}{% endif %}" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- PR Entries Table -->
+        <div class="mb-3">
+            <table class="table table-bordered">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Index</th>
+                        <th style="width: 40%;">Description</th>
+                        <th>Cost</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="itemRows">
+                    {% if creation %}
+                        <tr>
+                            <td class="index">1</td>
+                            <td><input type="text" class="form-control description" placeholder="description" name="description[]" required></td>
+                            <td><input type="number" class="form-control cost" placeholder="cost" name="cost[]" required></td>
+                            <td><input type="number" class="form-control quantity" placeholder="quantity" name="quantity[]" required></td>
+                            <td><input type="number" class="form-control total" placeholder="total" name="total[]" readonly required></td>
+                            <td><input type="hidden" class="form-control index-value" name="index[]" value="1"><button type="button" class="btn btn-danger btn-sm deleteRowBtn">Delete</button></td>
+                        </tr>
+                    {% else %}
+                        {% for pr_entry in pr_entries %}
+                            <tr>
+                                <td class="index">{{ loop.index }}</td>
+                                <td><input type="text" class="form-control description" placeholder="description" name="description[]" value="{{ pr_entry['description'] }}" required></td>
+                                <td><input type="number" class="form-control cost" placeholder="cost" name="cost[]" value="{{ pr_entry['cost'] }}" required></td>
+                                <td><input type="number" class="form-control quantity" placeholder="quantity" name="quantity[]" value="{{ pr_entry['quantity'] }}" required></td>
+                                <td><input type="number" class="form-control total" placeholder="total" name="total[]" value="{{ pr_entry['total_cost'] }}" readonly required></td>
+                                <td><input type="hidden" class="form-control index-value" name="index[]" value="{{ loop.index }}"><button type="button" class="btn btn-danger btn-sm deleteRowBtn">Delete</button></td>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" style="text-align: right; padding-right: 10px;"><strong>Total PR Cost:</strong></td>
+                        <td><input type="number" class="form-control" id="totalCost" placeholder="Total Cost" readonly name="total-cost"></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <div class="text-center mb-3">
+                <button type="button" class="btn btn-outline-secondary" id="addRowBtn">Add New Row</button>
+            </div>
+        </div>
+        <br><br>
+
+        <!-- Submission Button -->
+        <div class="text-center">
+            <button type="submit" class="btn btn-success">{% if creation %}Submit{% else %}Update{% endif %} Request</button>
+        </div>
+    </form>
+    <br>
+
+    <!-- Cancel Button -->
+    <form action="/cancel">
+        <div class="text-center">
+            <button type="submit" class="btn btn-danger">Cancel</button>
+        </div>
+    </form>
+</div>
+
+<!-- Script to handle adding and deleting rows -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var today = new Date();
+        var day = String(today.getDate()).padStart(2, '0');
+        var month = String(today.getMonth() + 1).padStart(2, '0');
+        var year = today.getFullYear();
+        var formattedDate = year + '-' + month + '-' + day;
+        document.getElementById('date').value = formattedDate;
+
+        function calculateTotal(row) {
+            var cost = parseFloat(row.querySelector('.cost').value) || 0;
+            var quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+            var total = cost * quantity;
+            row.querySelector('.total').value = total;
+            updateTotalCost();
+        }
+
+        function updateTotalCost() {
+            var totalCost = 0;
+            document.querySelectorAll('.total').forEach(function (totalInput) {
+                totalCost += parseFloat(totalInput.value) || 0;
+            });
+            document.getElementById('totalCost').value = totalCost;
+        }
+
+        document.getElementById('addRowBtn').addEventListener('click', function () {
+            var tableBody = document.getElementById('itemRows');
+            var rowCount = tableBody.rows.length;
+            var newRow = `
+            <tr>
+                <td class="index">${rowCount + 1}</td>
+                <td><input type="text" class="form-control description" placeholder="Description" required name="description[]"></td>
+                <td><input type="number" class="form-control cost" placeholder="Cost" required name="cost[]" step="0.01"></td>
+                <td><input type="number" class="form-control quantity" placeholder="Quantity" required name="quantity[]"></td>
+                <td><input type="text" class="form-control total" placeholder="Total" readonly name="total[]"></td>
+                <td><input type="hidden" class="form-control index-value" name="index[]" value="${rowCount + 1}"><button type="button" class="btn btn-danger btn-sm deleteRowBtn">Delete</button></td>
+            </tr>`;
+            tableBody.insertAdjacentHTML('beforeend', newRow);
+        });
+
+        function updateIndexes() {
+            document.querySelectorAll('#itemRows tr').forEach(function (row, index) {
+                row.querySelector('.index').textContent = index + 1;
+                row.querySelector('.index-value').value = index + 1;
+            });
+        }
+
+        document.getElementById('itemRows').addEventListener('input', function (e) {
+            if (e.target.classList.contains('cost') || e.target.classList.contains('quantity')) {
+                calculateTotal(e.target.closest('tr'));
+            }
+        });
+
+        document.getElementById('itemRows').addEventListener('click', function (e) {
+            if (e.target.classList.contains('deleteRowBtn')) {
+                var row = e.target.closest('tr');
+                var tableBody = document.getElementById('itemRows');
+                var rowCount = tableBody.rows.length;
+
+                if (rowCount > 1) {
+                    row.remove();
+                } else {
+                    row.querySelectorAll('input').forEach(input => input.value = '');
+                    row.querySelector('.total').value = '';
+                }
+
+                updateTotalCost();
+                if (rowCount === 1) document.getElementById('totalCost').value = '';
+                updateIndexes();
+            }
+        });
+
+        window.onload = function () {
+            document.querySelectorAll('#itemRows tr').forEach(calculateTotal);
+            document.querySelectorAll('input[name="cost[]"], input[name="total[]"]').forEach(function (input) {
+                if (input.value) input.value = parseFloat(input.value);
+            });
+        }
+    });
+
+</script>
+
+{% endblock %}

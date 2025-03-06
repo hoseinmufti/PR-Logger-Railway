@@ -1,0 +1,154 @@
+{% extends "layout.html" %}
+
+{% block title %}Real{% endblock %}
+
+{% block main %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Welcoming Header -->
+    <div class="container my-4">
+        <div class="row">
+            <!-- Left Side (3/4 ratio) -->
+            <div class="col-9">
+                <!-- Centered Title -->
+                <div class="text-center">
+                    <h3 class="mb-0">View PR</h3>
+                </div>
+                <div class="d-flex justify-content-between mt-2">
+                    <!-- Revise button only if the PR has not been deleted -->
+                    {% if not bool_revision %}
+                        {% if not pr_log.deleted == 1 %}
+                            <form action="/revise_pr">
+                                <input type="hidden" name="pr_no" value="{{ pr_log['pr_no'] }}">
+                                <button type="submit" class="btn btn-warning btn-sm">Revise</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <!-- Spacer to maintain alignment -->
+                        <div style="height: 30px;"></div>
+
+                        <!-- Current version button if pr_revisions exist -->
+                        <form action="/view_pr">
+                            <input type="hidden" name="pr_no" value="{{ pr_log['pr_no'] }}">
+                            <button type="submit" class="btn btn-success btn-sm">Current Version</button>
+                        </form>
+                    {% endif %}
+                </div>
+
+                <hr class="my-4">
+
+                <!-- PR Log Section -->
+                <div class="mb-5 table-responsive" style="overflow-x: auto;">
+                    <table class="table" style="table-layout: fixed; width: 100%; word-wrap: break-word;">
+                        <thead>
+                            <tr>
+                                {% for header in ["PR no.", "Title", "Currency", "Budget Line", "Creation Date"] %}
+                                    <th>{{ header }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    {{ pr_log.pr_no }}
+                                </td>
+                                {% for key in ["title", "currency", "budget_line", "creation_date"] %}
+                                    <td style="color: {% if key in pr_log.revision.changes %} red {% endif %};">
+                                        {{ pr_log[key] }}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- PR Entries Section -->
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                {% for header in ["Index", "Description", "Cost", "Quantity", "Total"] %}
+                                    <th>{{ header }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pr_entry in pr_entries %}
+                            <tr>
+                                {% if pr_entry.revision.type == "added"  %}
+                                    <td style="color: green">{{ pr_entry.index }}</td>
+                                    <td style="color: green">New Row Added</td>
+                                    <td colspan="3"></td>
+                                {% elif pr_entry.revision.type == "removed" %}
+                                    {% for field in ["index", "description", "cost", "quantity", "total"] %}
+                                        <td style="color: red" >
+                                            <del>{{ pr_entry[field] }}</del>
+                                        </td>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for field in ["index", "description", "cost", "quantity", "total"] %}
+                                        <td style="color: {% if bool_revision %}{% if field in pr_entry.revision.changes %} red {% endif %}{% endif %}">
+                                            {{ pr_entry[field] }}
+                                        </td>
+                                    {% endfor %}
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-right"><strong>Total PR Cost:</strong></td>
+                                <td style="color: {% if 'total_cost' in pr_log.revision.changes %} red {% endif %};">
+                                    {{ pr_log.total_cost }}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <!-- Right Side (1/4 ratio) -->
+            <div class="col-3">
+                <div style="height: 8px;"></div> <!-- Vertical Spacer -->
+
+                <!-- Adding top margin to align with the left table -->
+                <div class="mt-5">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Revisions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for revision in pr_revisions %}
+                                <tr>
+                                    <td>
+                                        <form action="/view_revision">
+                                            <input type="hidden" name="pr-id" value="{{ revision.pr_id }}">
+                                            <button type="submit" class="btn btn-info">{{ revision.datetime }}</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td>
+                                        <p>No revisions have been made.</p>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
