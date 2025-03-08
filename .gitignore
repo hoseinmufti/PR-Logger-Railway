@@ -1,2 +1,8 @@
+# Ignore the pr_logger directory (virtual environment)
 pr_logger
+
+# Ignore Flask session files
 flask_session
+
+# Ignore Python cache files
+__pycache__
