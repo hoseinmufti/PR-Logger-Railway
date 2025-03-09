@@ -104,7 +104,6 @@ def update_pr():
         "title": pr_title,
         "total_cost": float(pr_total_cost),
     }
-    return revised_pr_logs
 
     revised_pr_entries = []
     for i in range(len(pr_indices)):
