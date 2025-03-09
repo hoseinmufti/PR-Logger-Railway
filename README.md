@@ -1,5 +1,5 @@
 # PR_Logger
-#### Video Demo:  https://youtu.be/77hLxue03-Q?si=UtFxHw1wFJiVlMSR
+#### Video Demo:  https://www.youtube.com/watch?v=77hLxue03-Q
 #### Description:
 PR Logger is a web application designed to manage purchase request (PR) forms. The application allows users to create, view, revise, and track revisions of PRs. It is built using Flask as the web framework and SQLite as the database. The application also supports session management and is configured to be deployed on Railway using a `nixpacks.toml` file.
 
